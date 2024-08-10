@@ -10,7 +10,7 @@ app = Flask(__name__)
 cors = CORS(app, origins='*')
 
 model = BigramLanguageModel()
-model.load_state_dict(torch.load('Chess_Transformer_Model'))
+model.load_state_dict(torch.load('Chess_Transformer_Model', weights_only=False, map_location=torch.device('cpu')))
 
 @app.route('/generate', methods=['GET'])
 def generate():
