@@ -35,6 +35,7 @@ function Chess_Visualizer() {
   const fetchPrediction = async () => {
     const response = await axios.get('http://localhost:8000/generate');
     setPrediction(response.data.result);
+    console.log(response.data.result)
   };
 
   useEffect(() => {
@@ -42,42 +43,197 @@ function Chess_Visualizer() {
   }, []);
 
   var moveList = " " + prediction + " ";
-  var moveNumber = 1;
+  var current_move_Number = 0;
   var hasMoves = true;
-
-  console.log(moveList);
+  var separated_moves = moveList.split(" ");
+  var board_states = [initialBoard]
 
   const makeMove = () => {
+    var newBoard = board.map(row => [...row]);
+    var move = separated_moves[current_move_Number];
+    let x_destination2 = -1;
+    let y_destination2 = -1;
+    let x_start2 = -1;
+    let y_start2 = -1;
+    //ADD CHECKS FOR ILLEGAL MOVES (NONE AT THE MOMENT)
+    if (current_move_Number < separated_moves.length - 1) {
+      current_move_Number += 1;
+      let pieces_moved = 1;
+      if (board_states.length - 1 >= current_move_Number) {
+        setBoard(board_states[current_move_Number]);
+      } else {
+        if (move == "0-0-0") {
+          pieces_moved += 1;
+          if (current_move_Number % 2 == 0) {
+            x_destination = 2;
+            y_destination = 0;
+            x_start = 4;
+            y_start = 0;
+            x_destination2 = 3;
+            y_destination2 = 0;
+            x_start2 = 0;
+            y_start2 = 0;
+          } else {
+            x_destination = 2;
+            y_destination = 7;
+            x_start = 4;
+            y_start = 7;
+            x_destination2 = 3;
+            y_destination2 = 7;
+            x_start2 = 0;
+            y_start2 = 7;
+          }
+        } else if (move == "0-0") {
+          pieces_moved += 1;
+          if (current_move_Number % 2 == 0) {
+            x_destination = 6;
+            y_destination = 0;
+            x_start = 4;
+            y_start = 0;
+            x_destination2 = 5;
+            y_destination2 = 0;
+            x_start2 = 7;
+            y_start2 = 0;
+          } else {
+            x_destination = 6;
+            y_destination = 7;
+            x_start = 4;
+            y_start = 7;
+            x_destination2 = 5;
+            y_destination2 = 7;
+            x_start2 = 7;
+            y_start2 = 7;
+          }
+        } else {
+          while(!(1 <= move[move.length-1] && move[move.length-1] <= 8)) {
+            move = move.slice(0, -1);
+          }
+          destination_square = move.slice(-2);
+          x_destination = destination_square.charCodeAt(1) - "1".charCodeAt(0);
+          y_destination = destination_square.charCodeAt(0) - "a".charCodeAt(0);
+          if (current_move_Number % 2 == 0) {
+            piece_letter = move[0].toLowerCase();
+          }
+          if (move[0] == 'K') {
+            for (let i = 0; i < 8; i++) {
+              for (let j = 0; j < 8; j++) {
+                if (board[i][j] == piece_letter) {
+                  x_start = i;
+                  y_start = j;
+                }
+              }
+            }
+          } else if (move[0] == 'Q') {
+            for (let i = 0; i < 8; i++) {
+              for (let j = 0; j < 8; j++) {
+                if (board[i][j] == piece_letter) {
+                  x_start = i;
+                  y_start = j;
+                }
+              }
+            }
+          } else if (move[0] == 'R') {
+            //add implementation for ambiguity of which rook
+            let rooks = 0;
+            for (let i = 0; i < 8; i++) {
+              for (let j = 0; j < 8; j++) {
+                if (board[i][j] == piece_letter) {
+                  x_start = i;
+                  y_start = j;
+                  rooks += 1;
+                  if (x_start == x_destination || y_start == y_destination) {
+                    rooks += 1;
+                  }
+                }
+              }
+              if (knights >= 1) {
+                break;
+              }
+            }
+          } else if (move[0] == 'N') {
+            //add implementation for ambiguity of which pawn
+            let knights = 0;
+            for (let i = 0; i < 8; i++) {
+              for (let j = 0; j < 8; j++) {
+                if (board[i][j] == piece_letter) {
+                  x_start = i;
+                  y_start = j;
+                  knights += 1;
+                  if ((Math.abs(x_destination-x_start) == 1 && 2 == Math.abs(y_destination - y_start)) || (Math.abs(x_destination-x_start) == 2 && 1 == Math.abs(y_destination - y_start))) {
+                    knights += 1;
+                  }
+                }
+              }
+              if (knights >= 1) {
+                break;
+              }
+            }
+          } else if (move[0] == 'B') {
+            let bishops = 0;
+            for (let i = 0; i < 8; i++) {
+              for (let j = 0; j < 8; j++) {
+                if (board[i][j] == piece_letter) {
+                  x_start = i;
+                  y_start = j;
+                  bishops += 1;
+                  if (Math.abs(x_destination-x_start) == Math.abs(y_destination - y_start)) {
+                    bishops += 1;
+                  }
+                }
+              }
+              if (bishops >= 1) {
+                break;
+              }
+            }
+          } else {
+            //pawn move
+            if (move.length == 2) {
+              //direct pawn move, no other considerations
+              if (current_move_Number % 2 == 0) {
+                x_start = x_destination;
+                y_start = y_destination - 1;
+                if (board[x_start][y_start] == ' ') {
+                  y_start -= 1;
+                }
+              } else {
+                x_start = x_destination;
+                y_start = y_destination + 1;
+                if (board[x_start][y_start] == ' ') {
+                  y_destination += 1;
+                }
+              }
+            } else {
+              //is a capture, move from one of the neighbouring files, check the first letter to decide which column
+              y_start = move.charCodeAt(0) - 'a'.charCodeAt(0);
+              if (current_move_Number % 2 == 0) {
+                x_start = x_destination - 1;
+              } else {
+                x_start = x_destination + 1;
+              }
+            }
+          }
+        }
+        newBoard[x_destination][y_destination] = newBoard[x_start][y_start];
+        newBoard[x_start][y_start] = ' ';
+        if (pieces_moved == 2) {
+          newBoard[x_destination2][y_destination2] = newBoard[x_start2][y_start2];
+          newBoard[x_start2][y_start2] = ' '; 
+        }
+        setBoard(newBoard);
 
+        //push the new boardstate (to allow for undo)
+        board_states.push(newBoard)
+      }
+    }
+    console.log("made move successfully");
   }
 
   const undoMove = () => {
-
+    if (current_move_Number > 0) {
+      current_move_Number -= 1;
+      setBoard(board_states[current_move_Number])
+    }
   }
-
-  // const fetchMove = async () => {
-  //     try {
-  //         const response = await axios.get('http://localhost:5000/get_move');
-  //         const move = response.data.move;
-  //         if (move) {
-  //             makeMove(move.from, move.to);
-  //         }
-  //     } catch (error) {
-  //         console.error('Error fetching move:', error);
-  //     }
-  // };
-
-  // const makeMove = (from, to) => {
-  //     const fromRow = 8 - parseInt(from[1], 10);
-  //     const fromCol = from.charCodeAt(0) - 'a'.charCodeAt(0);
-  //     const toRow = 8 - parseInt(to[1], 10);
-  //     const toCol = to.charCodeAt(0) - 'a'.charCodeAt(0);
-
-  //     const newBoard = board.map(row => [...row]);
-  //     newBoard[toRow][toCol] = newBoard[fromRow][fromCol];
-  //     newBoard[fromRow][fromCol] = ' ';
-  //     setBoard(newBoard);
-  // };
 
   return (
     <div className="container">
