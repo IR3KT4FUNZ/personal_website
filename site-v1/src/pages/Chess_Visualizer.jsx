@@ -31,6 +31,8 @@ const initialBoard = [
 function Chess_Visualizer() {
   const [board, setBoard] = useState(initialBoard);
   const [prediction, setPrediction] = useState('');
+  const current_move_Number = useRef(0)
+  const board_states = useRef([initialBoard])
 
   const fetchPrediction = async () => {
     const response = await axios.get('http://localhost:8000/generate');
@@ -43,28 +45,28 @@ function Chess_Visualizer() {
   }, []);
 
   var moveList = " " + prediction + " ";
-  var current_move_Number = 0;
   var hasMoves = true;
   var separated_moves = moveList.split(" ");
-  var board_states = [initialBoard]
 
   const makeMove = () => {
     var newBoard = board.map(row => [...row]);
-    var move = separated_moves[current_move_Number];
+    var move = separated_moves[current_move_Number.current];
     let x_destination2 = -1;
     let y_destination2 = -1;
     let x_start2 = -1;
     let y_start2 = -1;
     //ADD CHECKS FOR ILLEGAL MOVES (NONE AT THE MOMENT)
-    if (current_move_Number < separated_moves.length - 1) {
-      current_move_Number += 1;
+    if (current_move_Number.current < separated_moves.length - 1) {
+      const newBoard = board.map(row => [...row]);
+      const move = separated_moves[current_move_Number.current];
+      current_move_Number.current += 1;
       let pieces_moved = 1;
-      if (board_states.length - 1 >= current_move_Number) {
-        setBoard(board_states[current_move_Number]);
+      if (board_states.length - 1 >= current_move_Number.current) {
+        setBoard(board_states[current_move_Number.current]);
       } else {
         if (move == "0-0-0") {
           pieces_moved += 1;
-          if (current_move_Number % 2 == 0) {
+          if (current_move_Number.current % 2 == 0) {
             x_destination = 2;
             y_destination = 0;
             x_start = 4;
@@ -85,7 +87,7 @@ function Chess_Visualizer() {
           }
         } else if (move == "0-0") {
           pieces_moved += 1;
-          if (current_move_Number % 2 == 0) {
+          if (current_move_Number.current % 2 == 0) {
             x_destination = 6;
             y_destination = 0;
             x_start = 4;
@@ -111,7 +113,7 @@ function Chess_Visualizer() {
           destination_square = move.slice(-2);
           x_destination = destination_square.charCodeAt(1) - "1".charCodeAt(0);
           y_destination = destination_square.charCodeAt(0) - "a".charCodeAt(0);
-          if (current_move_Number % 2 == 0) {
+          if (current_move_Number.current % 2 == 0) {
             piece_letter = move[0].toLowerCase();
           }
           if (move[0] == 'K') {
@@ -189,7 +191,7 @@ function Chess_Visualizer() {
             //pawn move
             if (move.length == 2) {
               //direct pawn move, no other considerations
-              if (current_move_Number % 2 == 0) {
+              if (current_move_Number.current % 2 == 0) {
                 x_start = x_destination;
                 y_start = y_destination - 1;
                 if (board[x_start][y_start] == ' ') {
@@ -205,7 +207,7 @@ function Chess_Visualizer() {
             } else {
               //is a capture, move from one of the neighbouring files, check the first letter to decide which column
               y_start = move.charCodeAt(0) - 'a'.charCodeAt(0);
-              if (current_move_Number % 2 == 0) {
+              if (current_move_Number.current % 2 == 0) {
                 x_start = x_destination - 1;
               } else {
                 x_start = x_destination + 1;
@@ -222,16 +224,16 @@ function Chess_Visualizer() {
         setBoard(newBoard);
 
         //push the new boardstate (to allow for undo)
-        board_states.push(newBoard)
+        board_states.current.push(newBoard)
       }
     }
     console.log("made move successfully");
   }
 
   const undoMove = () => {
-    if (current_move_Number > 0) {
-      current_move_Number -= 1;
-      setBoard(board_states[current_move_Number])
+    if (current_move_Number.current > 0) {
+      current_move_Number.current -= 1;
+      setBoard(board_states.current[current_move_Number.current]);
     }
   }
 
