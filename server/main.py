@@ -15,7 +15,7 @@ model.load_state_dict(torch.load('Chess_Transformer_Model', weights_only=False, 
 @app.route('/generate', methods=['GET'])
 def generate():
     #use cpu for now, haven't decided on deployment...
-    generated_game = decode(model.generate(idx = torch.zeros((1,1), dtype = torch.long, device='cpu'), max_new_tokens=200)[0].tolist())
+    generated_game = decode(model.generate(idx = torch.zeros((1,1), dtype = torch.long, device='cpu'), max_new_tokens=140)[0].tolist())
     return jsonify({'result': generated_game})
 
 if __name__ == "__main__":

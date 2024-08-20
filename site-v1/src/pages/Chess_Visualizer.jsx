@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './Chess_Visualizer.css';
 
@@ -37,82 +37,121 @@ function Chess_Visualizer() {
   const fetchPrediction = async () => {
     const response = await axios.get('http://localhost:8000/generate');
     setPrediction(response.data.result);
-    console.log(response.data.result)
   };
 
   useEffect(() => {
-    fetchPrediction();
+    let isMounted = true;
+    if (isMounted) {
+      fetchPrediction();
+    }
+
+    return () => {
+
+      isMounted = false;
+    };
   }, []);
 
-  var moveList = " " + prediction + " ";
-  var hasMoves = true;
+  // IMPLEMENT KEYPRESSING
+  // useEffect(() => {
+  //   const handleKeyDown = (event) => {
+  //     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+  //       event.preventDefault(); // Prevents default behavior of arrow keys
+  //     }
+  //     console.log("Key pressed:", event.key);
+  //     if (event.key === 'ArrowLeft') {
+  //       undoMove();
+  //     } else if (event.key === 'ArrowRight') {
+  //       makeMove();
+  //     }
+  //   };
+
+  //   window.addEventListener('keydown', handleKeyDown);
+
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //   };
+  // }, []);
+
+  var moveList = prediction;
+  while (moveList.charAt(moveList.length - 1) == ' '.charAt(0)) {
+    moveList = moveList.slice(0, -1);
+  }
+  moveList = moveList.substring(1);
+  // var moveList = "0-0 O-O"; //for speed when testing
   var separated_moves = moveList.split(" ");
+  separated_moves.pop();
+  // console.log(separated_moves);
 
   const makeMove = () => {
+    console.log("called make move");
     var newBoard = board.map(row => [...row]);
-    var move = separated_moves[current_move_Number.current];
+    let x_destination = -1;
+    let y_destination = -1;
+    let x_start = -1;
+    let y_start = -1;
     let x_destination2 = -1;
     let y_destination2 = -1;
     let x_start2 = -1;
     let y_start2 = -1;
     //ADD CHECKS FOR ILLEGAL MOVES (NONE AT THE MOMENT)
-    if (current_move_Number.current < separated_moves.length - 1) {
-      const newBoard = board.map(row => [...row]);
-      const move = separated_moves[current_move_Number.current];
+    if (current_move_Number.current < separated_moves.length) {
+      var newBoard = board.map(row => [...row]);
+      var move = separated_moves[current_move_Number.current];
       current_move_Number.current += 1;
       let pieces_moved = 1;
-      if (board_states.length - 1 >= current_move_Number.current) {
-        setBoard(board_states[current_move_Number.current]);
+      if (board_states.current.length > current_move_Number.current) {
+        setBoard(board_states.current[current_move_Number.current]);
       } else {
-        if (move == "0-0-0") {
+        if (move == "O-O-O") {
           pieces_moved += 1;
           if (current_move_Number.current % 2 == 0) {
-            x_destination = 2;
-            y_destination = 0;
-            x_start = 4;
-            y_start = 0;
-            x_destination2 = 3;
-            y_destination2 = 0;
+            x_destination = 0;
+            y_destination = 2;
+            x_start = 0;
+            y_start = 4;
+            x_destination2 = 0;
+            y_destination2 = 3;
             x_start2 = 0;
             y_start2 = 0;
           } else {
-            x_destination = 2;
-            y_destination = 7;
-            x_start = 4;
-            y_start = 7;
-            x_destination2 = 3;
-            y_destination2 = 7;
-            x_start2 = 0;
-            y_start2 = 7;
-          }
-        } else if (move == "0-0") {
-          pieces_moved += 1;
-          if (current_move_Number.current % 2 == 0) {
-            x_destination = 6;
-            y_destination = 0;
-            x_start = 4;
-            y_start = 0;
-            x_destination2 = 5;
-            y_destination2 = 0;
+            x_destination = 7;
+            y_destination = 2;
+            x_start = 7;
+            y_start = 4;
+            x_destination2 = 7;
+            y_destination2 = 3;
             x_start2 = 7;
             y_start2 = 0;
+          }
+        } else if (move == "O-O") {
+          pieces_moved += 1;
+          if (current_move_Number.current % 2 == 0) {
+            x_destination = 0;
+            y_destination = 6;
+            x_start = 0;
+            y_start = 4;
+            x_destination2 = 0;
+            y_destination2 = 5;
+            x_start2 = 0;
+            y_start2 = 7;
           } else {
-            x_destination = 6;
-            y_destination = 7;
-            x_start = 4;
-            y_start = 7;
-            x_destination2 = 5;
-            y_destination2 = 7;
+            x_destination = 7;
+            y_destination = 6;
+            x_start = 7;
+            y_start = 4;
+            x_destination2 = 7;
+            y_destination2 = 5;
             x_start2 = 7;
             y_start2 = 7;
           }
         } else {
-          while(!(1 <= move[move.length-1] && move[move.length-1] <= 8)) {
+          while(!("1".charCodeAt(0) <= move.charCodeAt(move.length - 1) && move.charCodeAt(move.length - 1) <= '8'.charCodeAt(0))) {
             move = move.slice(0, -1);
           }
-          destination_square = move.slice(-2);
-          x_destination = destination_square.charCodeAt(1) - "1".charCodeAt(0);
+          let destination_square = move.slice(-2);
+          x_destination = 7 - (destination_square.charCodeAt(1) - "1".charCodeAt(0));
           y_destination = destination_square.charCodeAt(0) - "a".charCodeAt(0);
+          let piece_letter = move[0];
           if (current_move_Number.current % 2 == 0) {
             piece_letter = move[0].toLowerCase();
           }
@@ -147,8 +186,11 @@ function Chess_Visualizer() {
                     rooks += 1;
                   }
                 }
+                if (rooks >= 2) {
+                  break;
+                }
               }
-              if (knights >= 1) {
+              if (rooks >= 2) {
                 break;
               }
             }
@@ -161,12 +203,15 @@ function Chess_Visualizer() {
                   x_start = i;
                   y_start = j;
                   knights += 1;
-                  if ((Math.abs(x_destination-x_start) == 1 && 2 == Math.abs(y_destination - y_start)) || (Math.abs(x_destination-x_start) == 2 && 1 == Math.abs(y_destination - y_start))) {
+                  if (((Math.abs(x_destination-x_start) == 1) && (2 == Math.abs(y_destination - y_start))) || ((Math.abs(x_destination-x_start) == 2) && (1 == Math.abs(y_destination - y_start)))) {
                     knights += 1;
                   }
                 }
+                if (knights >= 2) {
+                  break;
+                }
               }
-              if (knights >= 1) {
+              if (knights >= 2) {
                 break;
               }
             }
@@ -182,8 +227,11 @@ function Chess_Visualizer() {
                     bishops += 1;
                   }
                 }
+                if (bishops >= 2) {
+                  break;
+                }
               }
-              if (bishops >= 1) {
+              if (bishops >= 2) {
                 break;
               }
             }
@@ -192,16 +240,16 @@ function Chess_Visualizer() {
             if (move.length == 2) {
               //direct pawn move, no other considerations
               if (current_move_Number.current % 2 == 0) {
-                x_start = x_destination;
-                y_start = y_destination - 1;
+                y_start = y_destination;
+                x_start = x_destination - 1;
                 if (board[x_start][y_start] == ' ') {
-                  y_start -= 1;
+                  x_start -= 1;
                 }
               } else {
-                x_start = x_destination;
-                y_start = y_destination + 1;
+                y_start = y_destination;
+                x_start = x_destination + 1;
                 if (board[x_start][y_start] == ' ') {
-                  y_destination += 1;
+                  x_start += 1;
                 }
               }
             } else {
@@ -227,10 +275,10 @@ function Chess_Visualizer() {
         board_states.current.push(newBoard)
       }
     }
-    console.log("made move successfully");
   }
 
   const undoMove = () => {
+    console.log("called undo move");
     if (current_move_Number.current > 0) {
       current_move_Number.current -= 1;
       setBoard(board_states.current[current_move_Number.current]);
